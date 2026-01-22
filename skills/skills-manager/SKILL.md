@@ -1,6 +1,10 @@
 ---
 name: skills-manager
-description: Manage agent skills registry - add, remove, update, and sync skills from skills.sh. Use when user wants to: (1) add/install a new skill from GitHub, (2) update skills to latest versions, (3) remove skills, (4) list installed skills, (5) sync skills on a new machine. Triggers on "add skill", "install skill", "update skills", "remove skill", "list skills", "sync skills", "skill registry".
+description: Manage agent skills registry - add, remove, update, and sync skills from skills.sh. Use when user wants to add/install a new skill from GitHub, update skills to latest versions, remove skills, list installed skills, or sync skills on a new machine.
+license: MIT
+metadata:
+  author: nicmeriano
+  version: "1.0.0"
 ---
 
 # Skills Manager
