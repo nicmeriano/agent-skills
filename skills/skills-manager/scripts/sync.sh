@@ -37,18 +37,18 @@ echo ""
 SUCCESS=0
 FAILED=0
 
-# Install each skill
+# Install each skill (non-interactive for Claude Code compatibility)
 jq -r '.skills | to_entries[] | "\(.key)|\(.value.source)|\(.value.path)"' "$REGISTRY_FILE" | while IFS='|' read -r NAME SOURCE PATH; do
     echo "Installing $NAME..."
 
     if [ "$PATH" != "" ] && [ "$PATH" != "null" ]; then
-        if npx skills add "$SOURCE" "$PATH" 2>/dev/null; then
+        if npx skills add "$SOURCE" --skill "$NAME" --agent claude-code --yes 2>/dev/null; then
             echo "✓ Installed $NAME"
         else
             echo "✗ Failed to install $NAME"
         fi
     else
-        if npx skills add "$SOURCE" 2>/dev/null; then
+        if npx skills add "$SOURCE" --agent claude-code --yes 2>/dev/null; then
             echo "✓ Installed $NAME"
         else
             echo "✗ Failed to install $NAME"

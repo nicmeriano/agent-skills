@@ -64,11 +64,11 @@ update_skill() {
 
     mv "$TEMP_FILE" "$REGISTRY_FILE"
 
-    # Reinstall via npx skills
+    # Reinstall via npx skills (non-interactive for Claude Code compatibility)
     if [ "$SKILL_PATH" != "null" ] && [ -n "$SKILL_PATH" ]; then
-        npx skills add "$SOURCE" "$SKILL_PATH"
+        npx skills add "$SOURCE" --skill "$SKILL_NAME" --agent claude-code --yes
     else
-        npx skills add "$SOURCE"
+        npx skills add "$SOURCE" --agent claude-code --yes
     fi
 
     echo "✓ Updated $SKILL_NAME to $SHORT_SHA"

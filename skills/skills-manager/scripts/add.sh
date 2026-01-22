@@ -82,12 +82,12 @@ mv "$TEMP_FILE" "$REGISTRY_FILE"
 
 echo "Added '$SKILL_NAME' to registry (version: $SHORT_SHA)"
 
-# Install via npx skills
+# Install via npx skills (non-interactive for Claude Code compatibility)
 echo "Installing skill..."
 if [ -n "$SKILL_PATH" ]; then
-    npx skills add "$SOURCE" "$SKILL_PATH"
+    npx skills add "$SOURCE" --skill "$SKILL_NAME" --agent claude-code --yes
 else
-    npx skills add "$SOURCE"
+    npx skills add "$SOURCE" --agent claude-code --yes
 fi
 
 echo "Successfully added and installed '$SKILL_NAME'"
