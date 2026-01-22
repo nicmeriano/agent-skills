@@ -24,3 +24,7 @@ yarn-error.log*
 dist/
 build/
 *.log
+
+# Local skill installations
+.agents/
+.claude/

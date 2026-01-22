@@ -1,45 +1,40 @@
 #!/bin/bash
-# Sync (install) all skills from the registry
-# Usage: sync.sh
+# Install all saved skills from the registry
+# Usage: install.sh
 
 set -e
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
-REGISTRY_FILE="$REPO_ROOT/skills-registry.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-# Check dependencies
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed."
-    echo "Install with: brew install jq"
-    exit 1
-fi
+check_deps
+require_config
 
-# Check if registry exists
-if [ ! -f "$REGISTRY_FILE" ]; then
-    echo "Error: Registry file not found at $REGISTRY_FILE"
-    exit 1
-fi
+# Get registry file
+REPO_PATH=$(get_repo_path)
+REGISTRY_FILE="$REPO_PATH/skills-registry.json"
 
 # Count skills
 SKILL_COUNT=$(jq '.skills | length' "$REGISTRY_FILE")
 
 if [ "$SKILL_COUNT" -eq 0 ]; then
-    echo "No skills registered. Nothing to sync."
+    echo "No skills saved in registry. Nothing to install."
     echo ""
-    echo "Add a skill with: add.sh owner/repo [skill-path]"
+    echo "Save skills first with:"
+    echo "  $SCRIPT_DIR/save.sh owner/repo [skill-name]"
     exit 0
 fi
 
-echo "Syncing $SKILL_COUNT skill(s) from registry..."
+echo "Installing $SKILL_COUNT saved skill(s)..."
 echo ""
 
 # Track results
 SUCCESS=0
 FAILED=0
 
-# Install each skill (non-interactive for Claude Code compatibility)
+# Install each skill
 jq -r '.skills | to_entries[] | "\(.key)|\(.value.source)|\(.value.path)"' "$REGISTRY_FILE" | while IFS='|' read -r NAME SOURCE PATH; do
-    echo "Installing $NAME..."
+    echo "Installing $NAME from $SOURCE..."
 
     if [ "$PATH" != "" ] && [ "$PATH" != "null" ]; then
         if npx skills add "$SOURCE" --skill "$NAME" --agent claude-code --yes 2>/dev/null; then
@@ -57,4 +52,4 @@ jq -r '.skills | to_entries[] | "\(.key)|\(.value.source)|\(.value.path)"' "$REG
     echo ""
 done
 
-echo "Sync complete."
+echo "Install complete!"

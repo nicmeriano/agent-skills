@@ -1,45 +1,41 @@
 #!/bin/bash
-# List all registered skills
+# List all saved skills in the registry
 # Usage: list.sh
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
-REGISTRY_FILE="$REPO_ROOT/skills-registry.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-# Check dependencies
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed."
-    echo "Install with: brew install jq"
-    exit 1
-fi
+check_deps
+require_config
 
-# Check if registry exists
-if [ ! -f "$REGISTRY_FILE" ]; then
-    echo "Error: Registry file not found at $REGISTRY_FILE"
-    exit 1
-fi
+# Get registry file
+REPO_PATH=$(get_repo_path)
+REGISTRY_FILE="$REPO_PATH/skills-registry.json"
 
 # Count skills
 SKILL_COUNT=$(jq '.skills | length' "$REGISTRY_FILE")
 
 if [ "$SKILL_COUNT" -eq 0 ]; then
-    echo "No skills registered."
+    echo "No skills saved in registry."
     echo ""
-    echo "Add a skill with: add.sh owner/repo [skill-path]"
+    echo "Save a skill with:"
+    echo "  $SCRIPT_DIR/save.sh owner/repo [skill-name]"
     exit 0
 fi
 
-echo "Registered Skills ($SKILL_COUNT)"
-echo "===================="
+echo "Saved Skills ($SKILL_COUNT)"
+echo "============="
+echo ""
+echo "Registry: $REGISTRY_FILE"
 echo ""
 
 # List each skill
-jq -r '.skills | to_entries[] | "\(.key)|\(.value.source)|\(.value.path)|\(.value.version)|\(.value.installedAt)"' "$REGISTRY_FILE" | while IFS='|' read -r NAME SOURCE PATH VERSION INSTALLED; do
-    echo "📦 $NAME"
-    echo "   Source:    $SOURCE"
+jq -r '.skills | to_entries[] | "\(.key)|\(.value.source)|\(.value.path)|\(.value.savedAt)"' "$REGISTRY_FILE" | while IFS='|' read -r NAME SOURCE PATH SAVED; do
+    echo "• $NAME"
+    echo "  Source: $SOURCE"
     if [ "$PATH" != "" ] && [ "$PATH" != "null" ]; then
-        echo "   Path:      $PATH"
+        echo "  Path:   $PATH"
     fi
-    echo "   Version:   $VERSION"
-    echo "   Installed: $INSTALLED"
+    echo "  Saved:  $SAVED"
     echo ""
 done
