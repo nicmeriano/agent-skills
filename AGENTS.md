@@ -4,7 +4,8 @@
 
 ```
 skills.json       # Manifest of skills to install (fetched from GitHub)
-install.sh        # Fetches manifest + installs all listed skills
+install.sh        # Bash installer for curl | bash (non-interactive)
+cli/              # Node.js CLI for interactive installs (npx agent-skills)
 bundles/          # Grouped presets (same format as skills.json)
 skills/           # Local custom skills
 ```
@@ -50,16 +51,15 @@ Remove the entry from the `skills` array in `skills.json`.
 
 ### Running install
 
-The script fetches the manifest from GitHub — no clone needed:
-
 ```bash
-# Non-interactive (no gum needed)
+# Interactive (skill picker + options)
+npx agent-skills
+
+# Non-interactive (no clone needed)
 curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
 
-# Interactive (requires gum for skill picker + option prompts)
-./install.sh
-
 # Preview
+npx agent-skills --dry-run
 ./install.sh --dry-run
 ```
 

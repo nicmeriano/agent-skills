@@ -16,10 +16,10 @@ Dotfiles for AI agents. A portable manifest of agent skills that can be installe
    ```
 3. Install on any machine:
    ```bash
-   # Interactive (requires gum)
-   ./install.sh
+   # Interactive (pick skills, configure options)
+   npx agent-skills
 
-   # Non-interactive (no gum needed, works with curl | bash)
+   # Non-interactive (works with curl | bash)
    curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
    ```
 
@@ -45,6 +45,8 @@ You can include your own repo to install your custom skills alongside third-part
 Bundles are alternate manifests for grouped presets. Store them in `bundles/`:
 
 ```bash
+npx agent-skills --bundle frontend
+# or
 curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- --bundle frontend -y
 ```
 
@@ -53,10 +55,13 @@ Same format as `skills.json`, with an optional `description` field.
 ## Install Options
 
 ```bash
-# Interactive (pick skills + configure with gum TUI)
-./install.sh
+# Interactive (skill picker + options)
+npx agent-skills
+npx agent-skills --dry-run
+npx agent-skills --bundle frontend
 
 # Non-interactive
+npx agent-skills -y
 ./install.sh -y                       # Use defaults (global, claude-code, symlink)
 ./install.sh --bundle frontend        # Install from bundles/frontend.json
 ./install.sh --dry-run                # Preview what would be installed
@@ -74,10 +79,8 @@ curl -fsSL .../install.sh | bash -s -- --dry-run
 
 ## Dependencies
 
-- **Required**: `jq`, `npx` (Node.js)
-- **Interactive mode**: [`gum`](https://github.com/charmbracelet/gum) — `brew install gum` (macOS) or see [install docs](https://github.com/charmbracelet/gum#installation)
-
-Non-interactive mode (`-y`) does not require `gum` and works on any machine with `jq` + `npx`.
+- **`npx agent-skills`**: Node.js 18+ (no other dependencies)
+- **`install.sh`**: `jq`, `npx` (Node.js)
 
 ## Custom Skills
 
@@ -86,6 +89,6 @@ Author your own skills by adding them under `skills/<skill-name>/SKILL.md`. Incl
 ## Forking
 
 1. Fork this repo
-2. Update `REPO` at the top of `install.sh` to your GitHub username/repo
+2. Update `REPO` at the top of `install.sh` and in `cli/index.mjs`
 3. Edit `skills.json` with your preferred skills
 4. Update the curl URLs in this README
