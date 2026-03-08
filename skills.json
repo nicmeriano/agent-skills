@@ -1,3 +1,17 @@
 {
-  "skills": []
+  "skills": [
+    {
+      "source": "anthropics/skills",
+      "skill": "frontend-design"
+    },
+    {
+      "source": "vercel-labs/agent-skills",
+      "skill": "vercel-react-best-practices"
+    },
+    {
+      "source": "vercel-labs/agent-browser",
+      "skill": "agent-browser"
+    },
+    "ibelick/ui-skills"
+  ]
 }
