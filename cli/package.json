@@ -1,6 +1,6 @@
 {
   "name": "@nicmeriano/agent-skills",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Install agent skills from a remote manifest",
   "type": "module",
   "bin": {
