@@ -4,8 +4,7 @@
 
 ```
 skills.json       # Manifest of skills to install (fetched from GitHub)
-install.sh        # Bash installer for curl | bash (non-interactive)
-cli/              # Node.js CLI for interactive installs (npx agent-skills)
+cli/              # Node.js CLI (npx @nicmeriano/agent-skills install)
 bundles/          # Grouped presets (same format as skills.json)
 skills/           # Local custom skills
 ```
@@ -52,15 +51,14 @@ Remove the entry from the `skills` array in `skills.json`.
 ### Running install
 
 ```bash
-# Interactive (skill picker + options)
-npx agent-skills
+# Interactive (pick bundle, select skills, configure options)
+npx @nicmeriano/agent-skills install
 
-# Non-interactive (no clone needed)
-curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
+# Non-interactive
+npx @nicmeriano/agent-skills install -y
 
 # Preview
-npx agent-skills --dry-run
-./install.sh --dry-run
+npx @nicmeriano/agent-skills install --dry-run
 ```
 
 ### Creating a bundle
@@ -74,4 +72,4 @@ Create a new JSON file in `bundles/` with the same format as `skills.json`, plus
 }
 ```
 
-Install a bundle with: `./install.sh --bundle name`
+Install a bundle with: `npx @nicmeriano/agent-skills install --bundle name`

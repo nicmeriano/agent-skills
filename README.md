@@ -16,11 +16,7 @@ Dotfiles for AI agents. A portable manifest of agent skills that can be installe
    ```
 3. Install on any machine:
    ```bash
-   # Interactive (pick skills, configure options)
-   npx agent-skills
-
-   # Non-interactive (works with curl | bash)
-   curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
+   npx @nicmeriano/agent-skills install
    ```
 
 Browse available skills at [skills.sh](https://skills.sh).
@@ -45,9 +41,7 @@ You can include your own repo to install your custom skills alongside third-part
 Bundles are alternate manifests for grouped presets. Store them in `bundles/`:
 
 ```bash
-npx agent-skills --bundle frontend
-# or
-curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- --bundle frontend -y
+npx @nicmeriano/agent-skills install --bundle frontend
 ```
 
 Same format as `skills.json`, with an optional `description` field.
@@ -55,32 +49,20 @@ Same format as `skills.json`, with an optional `description` field.
 ## Install Options
 
 ```bash
-# Interactive (skill picker + options)
-npx agent-skills
-npx agent-skills --dry-run
-npx agent-skills --bundle frontend
-
-# Non-interactive
-npx agent-skills -y
-./install.sh -y                       # Use defaults (global, claude-code, symlink)
-./install.sh --bundle frontend        # Install from bundles/frontend.json
-./install.sh --dry-run                # Preview what would be installed
-./install.sh -a "claude-code,cursor"  # Specify agents
-./install.sh --copy                   # Copy instead of symlink
-./install.sh -p                       # Project scope instead of global
-
-# Run remotely (no clone needed)
-curl -fsSL .../install.sh | bash -s -- -y
-curl -fsSL .../install.sh | bash -s -- --bundle frontend -y
-curl -fsSL .../install.sh | bash -s -- --dry-run
+npx @nicmeriano/agent-skills install              # Interactive: pick bundle, skills, configure
+npx @nicmeriano/agent-skills install -y           # All skills with defaults
+npx @nicmeriano/agent-skills install --bundle frontend
+npx @nicmeriano/agent-skills install --dry-run    # Preview what would be installed
+npx @nicmeriano/agent-skills install -a "claude-code,cursor"
+npx @nicmeriano/agent-skills install --copy       # Copy instead of symlink
+npx @nicmeriano/agent-skills install -p           # Project scope instead of global
 ```
 
 **Defaults** (when using `-y`): global scope, claude-code agent, symlink method.
 
 ## Dependencies
 
-- **`npx agent-skills`**: Node.js 18+ (no other dependencies)
-- **`install.sh`**: `jq`, `npx` (Node.js)
+Node.js 18+ (no other dependencies).
 
 ## Custom Skills
 
@@ -89,6 +71,6 @@ Author your own skills by adding them under `skills/<skill-name>/SKILL.md`. Incl
 ## Forking
 
 1. Fork this repo
-2. Update `REPO` at the top of `install.sh` and in `cli/index.mjs`
-3. Edit `skills.json` with your preferred skills
-4. Update the curl URLs in this README
+2. Update `REPO` in `cli/index.mjs` to your GitHub username/repo
+3. Publish to npm under your own scope
+4. Edit `skills.json` with your preferred skills

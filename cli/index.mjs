@@ -7,16 +7,19 @@ import { execSync } from "node:child_process";
 const REPO = "nicmeriano/agent-skills";
 const BRANCH = "main";
 const BASE_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
+const API_URL = `https://api.github.com/repos/${REPO}/contents/bundles?ref=${BRANCH}`;
 
 // ── Parse args ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
+const subcommand = args[0] === "install" ? args.shift() : null;
+
 const flags = {
   yes: false,
   dryRun: false,
   scope: "global",
   agents: "claude-code",
   method: "symlink",
-  manifest: "skills.json",
+  bundle: null,
 };
 
 for (let i = 0; i < args.length; i++) {
@@ -40,11 +43,11 @@ for (let i = 0; i < args.length; i++) {
       flags.dryRun = true;
       break;
     case "--bundle":
-      flags.manifest = `bundles/${args[++i]}.json`;
+      flags.bundle = args[++i];
       break;
     case "-h":
     case "--help":
-      console.log(`Usage: npx agent-skills [options]
+      console.log(`Usage: npx @nicmeriano/agent-skills install [options]
 
 Install agent skills from a remote manifest.
 
@@ -55,51 +58,118 @@ Options:
   -a AGENTS           Comma-separated agents (default: claude-code)
   --copy              Copy instead of symlink
   --dry-run           Show what would be installed
-  --bundle NAME       Use a bundle (e.g., --bundle frontend)
-  -h, --help          Show this help`);
+  --bundle NAME       Install from a specific bundle
+  -h, --help          Show this help
+
+Examples:
+  npx @nicmeriano/agent-skills install              # Interactive
+  npx @nicmeriano/agent-skills install -y           # All skills, defaults
+  npx @nicmeriano/agent-skills install --bundle frontend
+  npx @nicmeriano/agent-skills install --dry-run`);
       process.exit(0);
   }
 }
 
-// ── Fetch manifest ──────────────────────────────────────────────────
-const manifestUrl = `${BASE_URL}/${flags.manifest}`;
-
-p.intro("agent-skills");
-
-const s = p.spinner();
-s.start(`Fetching ${flags.manifest} from ${REPO}`);
-
-let manifest;
-try {
-  const res = await fetch(manifestUrl);
+// ── Helpers ─────────────────────────────────────────────────────────
+async function fetchJSON(url) {
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  manifest = await res.json();
-} catch {
-  s.stop(`Failed to fetch ${flags.manifest}`);
-  p.cancel("Could not fetch manifest. Check that the repo is public.");
-  process.exit(1);
+  return res.json();
 }
 
-s.stop(`Fetched ${flags.manifest} from ${REPO}`);
+function parseSkills(manifest) {
+  return (manifest.skills ?? []).map((entry) => {
+    if (typeof entry === "string") {
+      return { source: entry, skill: null, label: entry };
+    }
+    const label = entry.skill
+      ? `${entry.source} :: ${entry.skill}`
+      : entry.source;
+    return { source: entry.source, skill: entry.skill ?? null, label };
+  });
+}
 
-const skills = manifest.skills ?? [];
-if (skills.length === 0) {
-  p.cancel("No skills found in manifest.");
+function buildCmd(entry) {
+  const parts = ["npx", "-y", "skills", "add", entry.source, "--yes"];
+  if (flags.scope === "global") parts.push("--global");
+  if (flags.method === "copy") parts.push("--copy");
+  for (const agent of flags.agents.split(",")) {
+    parts.push("--agent", agent.trim());
+  }
+  if (entry.skill) parts.push("--skill", entry.skill);
+  return parts.join(" ");
+}
+
+function cancel(msg = "Cancelled.") {
+  p.cancel(msg);
   process.exit(0);
 }
 
-// ── Build skill list ────────────────────────────────────────────────
-const skillEntries = skills.map((entry) => {
-  if (typeof entry === "string") {
-    return { source: entry, skill: null, label: entry };
-  }
-  const label = entry.skill
-    ? `${entry.source} :: ${entry.skill}`
-    : entry.source;
-  return { source: entry.source, skill: entry.skill ?? null, label };
-});
+// ── Main ────────────────────────────────────────────────────────────
+p.intro("agent-skills");
+const s = p.spinner();
 
-// ── Interactive skill picker ────────────────────────────────────────
+// ── 1. Discover bundles ─────────────────────────────────────────────
+let bundleNames = [];
+
+if (!flags.bundle && !flags.yes) {
+  s.start("Discovering bundles");
+  try {
+    const contents = await fetchJSON(API_URL);
+    bundleNames = contents
+      .filter((f) => f.name.endsWith(".json"))
+      .map((f) => f.name.replace(/\.json$/, ""));
+    s.stop(`Found ${bundleNames.length} bundle(s)`);
+  } catch {
+    s.stop("No bundles found");
+  }
+}
+
+// ── 2. Pick bundle (interactive) ────────────────────────────────────
+let manifestPath = "skills.json";
+
+if (!flags.yes && !flags.dryRun && !flags.bundle) {
+  const bundleOptions = [
+    { value: null, label: "All skills", hint: "skills.json" },
+    ...bundleNames.map((name) => ({
+      value: name,
+      label: name,
+      hint: `bundles/${name}.json`,
+    })),
+  ];
+
+  if (bundleOptions.length > 1) {
+    const picked = await p.select({
+      message: "Install from:",
+      options: bundleOptions,
+    });
+    if (p.isCancel(picked)) cancel();
+    if (picked) manifestPath = `bundles/${picked}.json`;
+  }
+} else if (flags.bundle) {
+  manifestPath = `bundles/${flags.bundle}.json`;
+}
+
+// ── 3. Fetch manifest ───────────────────────────────────────────────
+s.start(`Fetching ${manifestPath}`);
+
+let skillEntries;
+try {
+  const manifest = await fetchJSON(`${BASE_URL}/${manifestPath}`);
+  skillEntries = parseSkills(manifest);
+} catch {
+  s.stop(`Failed to fetch ${manifestPath}`);
+  cancel("Could not fetch manifest. Check that the repo is public.");
+}
+
+if (skillEntries.length === 0) {
+  s.stop("No skills found");
+  cancel("Manifest is empty.");
+}
+
+s.stop(`${skillEntries.length} skill(s) available`);
+
+// ── 4. Pick skills (interactive) ────────────────────────────────────
 let selected = skillEntries;
 
 if (!flags.yes && !flags.dryRun) {
@@ -113,15 +183,11 @@ if (!flags.yes && !flags.dryRun) {
     required: true,
   });
 
-  if (p.isCancel(picked)) {
-    p.cancel("Cancelled.");
-    process.exit(0);
-  }
-
+  if (p.isCancel(picked)) cancel();
   selected = picked.map((i) => skillEntries[i]);
 }
 
-// ── Interactive options ─────────────────────────────────────────────
+// ── 5. Configure options (interactive) ──────────────────────────────
 if (!flags.yes && !flags.dryRun) {
   const options = await p.group({
     scope: () =>
@@ -150,35 +216,13 @@ if (!flags.yes && !flags.dryRun) {
       }),
   });
 
-  if (p.isCancel(options)) {
-    p.cancel("Cancelled.");
-    process.exit(0);
-  }
-
+  if (p.isCancel(options)) cancel();
   flags.scope = options.scope;
   flags.method = options.method;
   flags.agents = options.agents;
 }
 
-// ── Build flags ─────────────────────────────────────────────────────
-function buildCmd(entry) {
-  const parts = ["npx", "-y", "skills", "add", entry.source, "--yes"];
-
-  if (flags.scope === "global") parts.push("--global");
-  if (flags.method === "copy") parts.push("--copy");
-
-  for (const agent of flags.agents.split(",")) {
-    parts.push("--agent", agent.trim());
-  }
-
-  if (entry.skill) {
-    parts.push("--skill", entry.skill);
-  }
-
-  return parts.join(" ");
-}
-
-// ── Install ─────────────────────────────────────────────────────────
+// ── 6. Install ──────────────────────────────────────────────────────
 const total = selected.length;
 let succeeded = 0;
 const failed = [];
@@ -189,30 +233,38 @@ if (flags.dryRun) {
     `Dry run — ${total} skill(s)`
   );
 } else {
+  s.start(`[1/${total}] ${selected[0].label}`);
+
   for (let i = 0; i < total; i++) {
     const entry = selected[i];
     const cmd = buildCmd(entry);
     const prefix = `[${i + 1}/${total}]`;
 
-    s.start(`${prefix} ${entry.label}`);
+    s.message = `${prefix} ${entry.label}`;
 
     try {
       execSync(cmd, { stdio: "pipe", timeout: 120_000 });
       succeeded++;
-      s.stop(`${prefix} ${entry.label} — done`);
     } catch {
       failed.push(entry.label);
-      s.stop(`${prefix} ${entry.label} — failed`);
     }
+  }
+
+  if (failed.length === 0) {
+    s.stop(`${succeeded}/${total} skill(s) installed`);
+  } else {
+    s.stop(`${succeeded}/${total} installed, ${failed.length} failed`);
   }
 }
 
-// ── Summary ─────────────────────────────────────────────────────────
+// ── 7. Summary ──────────────────────────────────────────────────────
 if (flags.dryRun) {
   p.outro(`${total} skill(s) would be installed.`);
-} else if (failed.length === 0) {
-  p.outro(`${succeeded}/${total} skill(s) installed successfully.`);
+} else if (failed.length > 0) {
+  p.log.warn(
+    `Failed:\n${failed.map((f) => `  - ${f}`).join("\n")}`
+  );
+  p.outro(`${succeeded}/${total} skill(s) installed.`);
 } else {
-  p.log.warn(`${failed.length} skill(s) failed:\n${failed.map((f) => `  - ${f}`).join("\n")}`);
-  p.outro(`${succeeded}/${total} skill(s) installed successfully.`);
+  p.outro(`All ${total} skill(s) installed successfully.`);
 }
