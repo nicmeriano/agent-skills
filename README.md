@@ -15,14 +15,14 @@ Browse available skills at [skills.sh](https://skills.sh).
 ```json
 {
   "skills": [
-    { "source": "anthropics/skills", "skill": "frontend-design" },
-    { "source": "vercel-labs/agent-skills", "skill": "vercel-react-best-practices" },
+    "anthropics/skills:frontend-design",
+    "vercel-labs/agent-skills:vercel-react-best-practices",
     "ibelick/ui-skills"
   ]
 }
 ```
 
-Entries can be `"owner/repo"` (single-skill repos) or objects with `source` and `skill` (multi-skill repos).
+Use `owner/repo:skill-name` to pick a specific skill from a multi-skill repo, or just `owner/repo` for single-skill repos.
 
 ## Options
 

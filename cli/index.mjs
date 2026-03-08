@@ -99,13 +99,13 @@ async function fetchJSON(url) {
 
 function parseSkills(manifest) {
   return (manifest.skills ?? []).map((entry) => {
-    if (typeof entry === "string") {
+    const colonIdx = entry.indexOf(":");
+    if (colonIdx === -1) {
       return { source: entry, skill: null, label: entry };
     }
-    const label = entry.skill
-      ? `${entry.source} :: ${entry.skill}`
-      : entry.source;
-    return { source: entry.source, skill: entry.skill ?? null, label };
+    const source = entry.slice(0, colonIdx);
+    const skill = entry.slice(colonIdx + 1);
+    return { source, skill, label: entry };
   });
 }
 

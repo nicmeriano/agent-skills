@@ -14,34 +14,28 @@ skills/           # Local custom skills
 ```json
 {
   "skills": [
-    "owner/repo",
-    {
-      "source": "org/multi-skill-repo",
-      "skill": "specific-skill-name"
-    }
+    "owner/repo:skill-name",
+    "owner/single-skill-repo"
   ]
 }
 ```
 
-Entries can be strings (shorthand) or objects (when selecting a specific skill from a multi-skill repo). The user's own repo can be listed to install custom skills.
+Use `owner/repo:skill-name` to pick a specific skill from a multi-skill repo, or just `owner/repo` for single-skill repos.
 
 ## Helping the User
 
 ### Adding a skill
 
-Add a string or object entry to the `skills` array in `skills.json`:
+Add a string to the `skills` array in `skills.json`:
+
+```json
+"owner/repo:skill-name"
+```
+
+Or for a single-skill repo:
 
 ```json
 "owner/repo"
-```
-
-Or for a specific skill within a repo:
-
-```json
-{
-  "source": "owner/repo",
-  "skill": "skill-name"
-}
 ```
 
 ### Removing a skill
@@ -68,7 +62,10 @@ Create a new JSON file in `bundles/` with the same format as `skills.json`, plus
 ```json
 {
   "description": "Frontend development skills",
-  "skills": ["owner/repo-a", "owner/repo-b"]
+  "skills": [
+    "owner/repo-a:skill",
+    "owner/repo-b"
+  ]
 }
 ```
 
