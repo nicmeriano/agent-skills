@@ -267,7 +267,7 @@ if (flags.dryRun) {
     const entry = selected[i];
     const cmd = buildCmd(entry);
 
-    s.message = `[${i + 1}/${total}] ${entry.label}`;
+    s.message(`[${i + 1}/${total}] ${entry.label}`);
 
     try {
       await run(cmd);
