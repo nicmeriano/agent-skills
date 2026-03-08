@@ -53,12 +53,13 @@ Remove the entry from the `skills` array in `skills.json`.
 The script fetches the manifest from GitHub — no clone needed:
 
 ```bash
+# Non-interactive (no gum needed)
 curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
-```
 
-Or locally for testing:
+# Interactive (requires gum for skill picker + option prompts)
+./install.sh
 
-```bash
+# Preview
 ./install.sh --dry-run
 ```
 

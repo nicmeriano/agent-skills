@@ -16,6 +16,10 @@ Dotfiles for AI agents. A portable manifest of agent skills that can be installe
    ```
 3. Install on any machine:
    ```bash
+   # Interactive (requires gum)
+   ./install.sh
+
+   # Non-interactive (no gum needed, works with curl | bash)
    curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
    ```
 
@@ -49,8 +53,11 @@ Same format as `skills.json`, with an optional `description` field.
 ## Install Options
 
 ```bash
-# Run directly
-./install.sh -y                       # Non-interactive, use defaults
+# Interactive (pick skills + configure with gum TUI)
+./install.sh
+
+# Non-interactive
+./install.sh -y                       # Use defaults (global, claude-code, symlink)
 ./install.sh --bundle frontend        # Install from bundles/frontend.json
 ./install.sh --dry-run                # Preview what would be installed
 ./install.sh -a "claude-code,cursor"  # Specify agents
@@ -63,7 +70,14 @@ curl -fsSL .../install.sh | bash -s -- --bundle frontend -y
 curl -fsSL .../install.sh | bash -s -- --dry-run
 ```
 
-**Defaults** (when using `-y` or pressing enter on prompts): global scope, claude-code agent, symlink method.
+**Defaults** (when using `-y`): global scope, claude-code agent, symlink method.
+
+## Dependencies
+
+- **Required**: `jq`, `npx` (Node.js)
+- **Interactive mode**: [`gum`](https://github.com/charmbracelet/gum) — `brew install gum` (macOS) or see [install docs](https://github.com/charmbracelet/gum#installation)
+
+Non-interactive mode (`-y`) does not require `gum` and works on any machine with `jq` + `npx`.
 
 ## Custom Skills
 
