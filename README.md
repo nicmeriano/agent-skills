@@ -1,56 +1,77 @@
 # Agent Skills
 
-A collection of shareable skills for AI coding agents, with a registry system for managing remote skills from [skills.sh](https://skills.sh).
+Dotfiles for AI agents. A portable manifest of agent skills that can be installed on any machine.
 
-## Installation
-
-```bash
-npx skills add nicomeriano/agent-skills
-```
-
-This installs all skills from this repository, including the `skills-manager` for managing additional remote skills.
-
-## Skills Included
-
-### skills-manager
-
-Manage your skills registry - add, remove, update, and sync skills from any GitHub repository.
-
-**Commands:**
-- **Add a skill**: "add skill vercel-labs/agent-skills react-best-practices"
-- **Remove a skill**: "remove skill react-best-practices"
-- **Update skills**: "update skills" or "update skill react-best-practices"
-- **List skills**: "list skills"
-- **Sync skills**: "sync skills" (installs all skills from registry)
-
-## Using the Skills Registry
-
-The `skills-registry.json` file tracks remote skills you've added. When you set up a new machine:
-
-1. Clone this repository
-2. Run `npx skills add nicomeriano/agent-skills` to install the skills-manager
-3. Ask your AI agent to "sync skills from registry"
-
-The agent will read your registry and install all tracked skills.
-
-## Adding Your Own Skills
+## Quick Start
 
 1. Fork this repository
-2. Add new skills under `skills/<skill-name>/SKILL.md`
-3. Optionally add scripts under `skills/<skill-name>/scripts/`
-4. Update the README to document your skills
+2. Edit `skills.json` to list the skills you want:
+   ```json
+   {
+     "skills": [
+       "nicmeriano/agent-skills",
+       "other-author/cool-skill"
+     ]
+   }
+   ```
+3. Install on any machine:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
+   ```
 
-## Registry Format
+Browse available skills at [skills.sh](https://skills.sh).
 
-```json
-{
-  "skills": {
-    "skill-name": {
-      "source": "owner/repo",
-      "path": "skills/skill-name",
-      "version": "abc1234",
-      "installedAt": "2025-01-21T00:00:00Z"
-    }
+## Manifest Format
+
+`skills.json` lists the skills you want installed. Entries can be:
+
+- **String** — shorthand for a single-skill repo: `"owner/repo"`
+- **Object** — when you need to pick a specific skill from a multi-skill repo:
+  ```json
+  {
+    "source": "org/multi-skill-repo",
+    "skill": "specific-skill-name"
   }
-}
+  ```
+
+You can include your own repo to install your custom skills alongside third-party ones.
+
+## Bundles
+
+Bundles are alternate manifests for grouped presets. Store them in `bundles/`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- --bundle frontend -y
 ```
+
+Same format as `skills.json`, with an optional `description` field.
+
+## Install Options
+
+```bash
+# Run directly
+./install.sh -y                       # Non-interactive, use defaults
+./install.sh --bundle frontend        # Install from bundles/frontend.json
+./install.sh --dry-run                # Preview what would be installed
+./install.sh -a "claude-code,cursor"  # Specify agents
+./install.sh --copy                   # Copy instead of symlink
+./install.sh -p                       # Project scope instead of global
+
+# Run remotely (no clone needed)
+curl -fsSL .../install.sh | bash -s -- -y
+curl -fsSL .../install.sh | bash -s -- --bundle frontend -y
+curl -fsSL .../install.sh | bash -s -- --dry-run
+```
+
+**Defaults** (when using `-y` or pressing enter on prompts): global scope, claude-code agent, symlink method.
+
+## Custom Skills
+
+Author your own skills by adding them under `skills/<skill-name>/SKILL.md`. Include your repo in `skills.json` to install them alongside everything else.
+
+## Forking
+
+1. Fork this repo
+2. Update `REPO` at the top of `install.sh` to your GitHub username/repo
+3. Edit `skills.json` with your preferred skills
+4. Update the curl URLs in this README

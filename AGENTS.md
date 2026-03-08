@@ -1,88 +1,76 @@
-# Agent Guide for agent-skills Repository
+# Agent Guide
 
-This document provides guidance for AI agents working with this repository.
-
-## Repository Purpose
-
-This repository hosts shareable agent skills and includes a registry system for tracking remote skills from GitHub repositories.
-
-## Skill Structure
-
-Each skill lives in its own directory under `skills/`:
+## Repo Structure
 
 ```
-skills/<skill-name>/
-├── SKILL.md           # Required - skill definition with YAML frontmatter
-└── scripts/           # Optional - executable scripts the skill can use
-    └── *.sh
+skills.json       # Manifest of skills to install (fetched from GitHub)
+install.sh        # Fetches manifest + installs all listed skills
+bundles/          # Grouped presets (same format as skills.json)
+skills/           # Local custom skills
 ```
 
-### SKILL.md Format
-
-Every skill must have a `SKILL.md` file with YAML frontmatter:
-
-```yaml
----
-name: skill-name
-description: Brief description. Include trigger phrases for when this skill should activate.
----
-
-# Skill Name
-
-Detailed instructions, usage examples, and documentation.
-```
-
-The `description` field should include keywords and phrases that help identify when to use the skill.
-
-## Skills Registry
-
-The `skills-registry.json` file tracks remote skills installed via the skills-manager:
+## skills.json Format
 
 ```json
 {
-  "skills": {
-    "skill-name": {
-      "source": "owner/repo",
-      "path": "skills/skill-name",
-      "version": "commit-sha",
-      "installedAt": "ISO-8601-timestamp"
+  "skills": [
+    "owner/repo",
+    {
+      "source": "org/multi-skill-repo",
+      "skill": "specific-skill-name"
     }
-  }
+  ]
 }
 ```
 
-## Working with skills-manager
+Entries can be strings (shorthand) or objects (when selecting a specific skill from a multi-skill repo). The user's own repo can be listed to install custom skills.
 
-When users ask to manage skills, use the skills-manager skill located at `skills/skills-manager/`.
+## Helping the User
 
-### Available Commands
+### Adding a skill
 
-| User Request | Action |
-|-------------|--------|
-| "add skill owner/repo [path]" | Run `scripts/add.sh` |
-| "remove skill name" | Run `scripts/remove.sh` |
-| "update skills" | Run `scripts/update.sh` |
-| "list skills" | Run `scripts/list.sh` |
-| "sync skills" | Run `scripts/sync.sh` |
+Add a string or object entry to the `skills` array in `skills.json`:
 
-### Script Execution
+```json
+"owner/repo"
+```
 
-Scripts are bash files that use `jq` for JSON manipulation. When executing:
+Or for a specific skill within a repo:
 
-1. Run from the repository root directory
-2. Pass arguments as positional parameters
-3. Scripts will update `skills-registry.json` and call `npx skills` as needed
+```json
+{
+  "source": "owner/repo",
+  "skill": "skill-name"
+}
+```
 
-## Best Practices
+### Removing a skill
 
-1. **Skill Naming**: Use lowercase, hyphenated names (e.g., `react-best-practices`)
-2. **Descriptions**: Include common trigger phrases users might say
-3. **Scripts**: Keep scripts focused and idempotent when possible
-4. **Registry**: Never manually edit `skills-registry.json` - use skills-manager
-5. **Commits**: When modifying skills, use descriptive commit messages
+Remove the entry from the `skills` array in `skills.json`.
 
-## File Locations
+### Running install
 
-- **Registry**: `/skills-registry.json`
-- **Skills**: `/skills/<skill-name>/SKILL.md`
-- **Scripts**: `/skills/<skill-name>/scripts/*.sh`
+The script fetches the manifest from GitHub — no clone needed:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nicmeriano/agent-skills/main/install.sh | bash -s -- -y
+```
+
+Or locally for testing:
+
+```bash
+./install.sh --dry-run
+```
+
+### Creating a bundle
+
+Create a new JSON file in `bundles/` with the same format as `skills.json`, plus an optional `description` field:
+
+```json
+{
+  "description": "Frontend development skills",
+  "skills": ["owner/repo-a", "owner/repo-b"]
+}
+```
+
+Install a bundle with: `./install.sh --bundle name`
