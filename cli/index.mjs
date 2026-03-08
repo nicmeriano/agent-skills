@@ -196,14 +196,14 @@ if (skillEntries.length === 0) {
   cancel("Manifest is empty.");
 }
 
-s.stop(`${skillEntries.length} skill(s) available`);
+s.stop(`Fetched ${manifestPath}`);
 
 // ── 4. Pick skills (interactive) ────────────────────────────────────
 let selected = skillEntries;
 
 if (!flags.yes && !flags.dryRun) {
   const picked = await p.multiselect({
-    message: "Select skills to install:",
+    message: `Select skills to install (${skillEntries.length} available):`,
     options: skillEntries.map((e, i) => ({
       value: i,
       label: e.label,
@@ -278,20 +278,18 @@ if (flags.dryRun) {
   }
 
   if (failed.length === 0) {
-    s.stop(`${succeeded}/${total} skill(s) installed`);
+    s.stop(`All ${total} skill(s) installed successfully.`);
   } else {
-    s.stop(`${succeeded}/${total} installed, ${failed.length} failed`);
+    s.stop(`${succeeded}/${total} skill(s) installed.`);
+    p.log.warn(
+      `Failed:\n${failed.map((f) => `  - ${f}`).join("\n")}`
+    );
   }
 }
 
-// ── 7. Summary ──────────────────────────────────────────────────────
+// ── 7. Outro ────────────────────────────────────────────────────────
 if (flags.dryRun) {
   p.outro(`${total} skill(s) would be installed.`);
-} else if (failed.length > 0) {
-  p.log.warn(
-    `Failed:\n${failed.map((f) => `  - ${f}`).join("\n")}`
-  );
-  p.outro(`${succeeded}/${total} skill(s) installed.`);
 } else {
-  p.outro(`All ${total} skill(s) installed successfully.`);
+  p.outro("Done!");
 }
