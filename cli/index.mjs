@@ -206,7 +206,8 @@ if (!flags.yes && !flags.dryRun) {
     message: `Select skills to install (${skillEntries.length} available):`,
     options: skillEntries.map((e, i) => ({
       value: i,
-      label: e.label,
+      label: e.skill ?? e.source,
+      hint: e.skill ? e.source : undefined,
     })),
     initialValues: skillEntries.map((_, i) => i),
     required: true,
