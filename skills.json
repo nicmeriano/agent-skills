@@ -12,6 +12,10 @@
       "source": "vercel-labs/agent-browser",
       "skill": "agent-browser"
     },
-    "ibelick/ui-skills"
+    "ibelick/ui-skills",
+    {
+      "source": "nicmeriano/agent-skills",
+      "skill": "spec"
+    }
   ]
 }
