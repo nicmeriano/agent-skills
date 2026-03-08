@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as p from "@clack/prompts";
-import { execSync } from "node:child_process";
+import { exec } from "node:child_process";
 
 // ── Config ──────────────────────────────────────────────────────────
 const REPO = "nicmeriano/agent-skills";
@@ -9,15 +9,35 @@ const BRANCH = "main";
 const BASE_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
 const API_URL = `https://api.github.com/repos/${REPO}/contents/bundles?ref=${BRANCH}`;
 
+const AGENTS = [
+  { value: "claude-code", label: "Claude Code" },
+  { value: "cursor", label: "Cursor" },
+  { value: "windsurf", label: "Windsurf" },
+  { value: "cline", label: "Cline" },
+  { value: "codex", label: "Codex" },
+  { value: "github-copilot", label: "GitHub Copilot" },
+  { value: "amp", label: "Amp" },
+  { value: "gemini-cli", label: "Gemini CLI" },
+  { value: "roo", label: "Roo Code" },
+  { value: "kilo", label: "Kilo Code" },
+  { value: "kiro-cli", label: "Kiro CLI" },
+  { value: "opencode", label: "OpenCode" },
+  { value: "goose", label: "Goose" },
+  { value: "droid", label: "Droid" },
+  { value: "trae", label: "Trae" },
+  { value: "continue", label: "Continue" },
+  { value: "junie", label: "Junie" },
+];
+
 // ── Parse args ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const subcommand = args[0] === "install" ? args.shift() : null;
+if (args[0] === "install") args.shift();
 
 const flags = {
   yes: false,
   dryRun: false,
   scope: "global",
-  agents: "claude-code",
+  agents: ["claude-code"],
   method: "symlink",
   bundle: null,
 };
@@ -34,7 +54,7 @@ for (let i = 0; i < args.length; i++) {
       flags.scope = "project";
       break;
     case "-a":
-      flags.agents = args[++i];
+      flags.agents = args[++i].split(",").map((a) => a.trim());
       break;
     case "--copy":
       flags.method = "copy";
@@ -62,8 +82,8 @@ Options:
   -h, --help          Show this help
 
 Examples:
-  npx @nicmeriano/agent-skills install              # Interactive
-  npx @nicmeriano/agent-skills install -y           # All skills, defaults
+  npx @nicmeriano/agent-skills install
+  npx @nicmeriano/agent-skills install -y
   npx @nicmeriano/agent-skills install --bundle frontend
   npx @nicmeriano/agent-skills install --dry-run`);
       process.exit(0);
@@ -93,11 +113,20 @@ function buildCmd(entry) {
   const parts = ["npx", "-y", "skills", "add", entry.source, "--yes"];
   if (flags.scope === "global") parts.push("--global");
   if (flags.method === "copy") parts.push("--copy");
-  for (const agent of flags.agents.split(",")) {
-    parts.push("--agent", agent.trim());
+  for (const agent of flags.agents) {
+    parts.push("--agent", agent);
   }
   if (entry.skill) parts.push("--skill", entry.skill);
   return parts.join(" ");
+}
+
+function run(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, { timeout: 120_000 }, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 }
 
 function cancel(msg = "Cancelled.") {
@@ -189,37 +218,36 @@ if (!flags.yes && !flags.dryRun) {
 
 // ── 5. Configure options (interactive) ──────────────────────────────
 if (!flags.yes && !flags.dryRun) {
-  const options = await p.group({
-    scope: () =>
-      p.select({
-        message: "Scope:",
-        options: [
-          { value: "global", label: "global" },
-          { value: "project", label: "project" },
-        ],
-        initialValue: flags.scope,
-      }),
-    method: () =>
-      p.select({
-        message: "Method:",
-        options: [
-          { value: "symlink", label: "symlink" },
-          { value: "copy", label: "copy" },
-        ],
-        initialValue: flags.method,
-      }),
-    agents: () =>
-      p.text({
-        message: "Agents:",
-        initialValue: flags.agents,
-        validate: (v) => (!v ? "At least one agent is required" : undefined),
-      }),
+  const scope = await p.select({
+    message: "Scope:",
+    options: [
+      { value: "global", label: "global" },
+      { value: "project", label: "project" },
+    ],
+    initialValue: flags.scope,
   });
+  if (p.isCancel(scope)) cancel();
+  flags.scope = scope;
 
-  if (p.isCancel(options)) cancel();
-  flags.scope = options.scope;
-  flags.method = options.method;
-  flags.agents = options.agents;
+  const agents = await p.multiselect({
+    message: "Agents:",
+    options: AGENTS,
+    initialValues: flags.agents,
+    required: true,
+  });
+  if (p.isCancel(agents)) cancel();
+  flags.agents = agents;
+
+  const method = await p.select({
+    message: "Method:",
+    options: [
+      { value: "symlink", label: "symlink" },
+      { value: "copy", label: "copy" },
+    ],
+    initialValue: flags.method,
+  });
+  if (p.isCancel(method)) cancel();
+  flags.method = method;
 }
 
 // ── 6. Install ──────────────────────────────────────────────────────
@@ -238,12 +266,11 @@ if (flags.dryRun) {
   for (let i = 0; i < total; i++) {
     const entry = selected[i];
     const cmd = buildCmd(entry);
-    const prefix = `[${i + 1}/${total}]`;
 
-    s.message = `${prefix} ${entry.label}`;
+    s.message = `[${i + 1}/${total}] ${entry.label}`;
 
     try {
-      execSync(cmd, { stdio: "pipe", timeout: 120_000 });
+      await run(cmd);
       succeeded++;
     } catch {
       failed.push(entry.label);
