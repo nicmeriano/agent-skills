@@ -110,7 +110,6 @@ Begin every spec with this header format:
 |---------|--------------------|
 | Date    | YYYY-MM-DD         |
 | Scope   | Small/Medium/Large |
-| Status  | Draft              |
 ```
 
 ## Output and Finalization
